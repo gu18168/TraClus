@@ -5,7 +5,8 @@ authors = ["gu18168 <gu18168@gmail.com>"]
 edition = "2018"
 
 [[bin]]
-name = "dbscansd"
+name = "traclus"
 path = "src/main.rs"
 
 [dependencies]
+regex = "1.1.2"
