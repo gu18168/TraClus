@@ -9,6 +9,9 @@ use traclus::{
     read_info_lines, 
     read_trajectory_lines, 
     FileError
+  },
+  cluster_gen::{
+    partition_trajectory
   }
 };
 
@@ -21,8 +24,9 @@ fn main() {
   // args[4] minLns
   if args.len() == 5 {
     let dimension: usize;
-    let trajectorys: Vec<Trajectory>;
+    let mut trajectorys: Vec<Trajectory>;
 
+    // 获得维度信息
     match read_info_lines(&args[1]) {
       Ok(dimen) => {
         dimension = dimen;
@@ -43,6 +47,7 @@ fn main() {
       }
     }
 
+    // 获得轨迹信息
     match read_trajectory_lines(&args[1], dimension) {
       Ok(trajs) => { trajectorys = trajs; },
       Err(e) => {
@@ -62,6 +67,11 @@ fn main() {
         }
         return;
       }
+    }
+
+    // 划分轨迹
+    for mut trajectory in trajectorys {
+      partition_trajectory(&mut trajectory);
     }
 
   } else {
