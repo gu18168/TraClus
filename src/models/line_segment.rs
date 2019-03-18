@@ -4,28 +4,25 @@ use crate::{
   }
 };
 
-pub struct LineSegment {
-  line_segment: MultiDimenPoint,
+pub struct LineSegment<'a> {
+  start_point: &'a MultiDimenPoint,
+  end_point: &'a MultiDimenPoint,
   trajectory_id: usize,
   order: usize
 }
 
-impl LineSegment {
-  pub fn new(dimension: usize, trajectory_id: usize, order: usize) -> Self {
+impl<'a> LineSegment<'a> {
+  pub fn new(trajectory_id: usize, order: usize, start_point: &'a MultiDimenPoint, end_point: &'a MultiDimenPoint) -> Self {
     Self {
-      line_segment: MultiDimenPoint::new(dimension),
+      start_point,
+      end_point,
       trajectory_id,
       order
     }
   }
 
-  /// 获得只读的线段
-  pub fn get_line_segment(&self) -> &MultiDimenPoint {
-    &self.line_segment
-  }
-
-  /// 获得可写的线段
-  pub fn get_mut_line_segment(&mut self) -> &mut MultiDimenPoint {
-    &mut self.line_segment
+  /// 根据指定的线段获取起点与终点
+  pub fn extract_start_end_points(&self) -> (&MultiDimenPoint, &MultiDimenPoint) {
+    (self.start_point, self.end_point)
   }
 }

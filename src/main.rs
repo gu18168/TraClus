@@ -13,6 +13,9 @@ use traclus::{
   partition_tra::{
     partition_trajectories,
     get_partition_line,
+  },
+  dbscan::{
+    perform_dbscan
   }
 };
 
@@ -24,6 +27,9 @@ fn main() {
   // args[3] eps
   // args[4] minLns
   if args.len() == 5 {
+    let eps: f64 = args[3].parse().expect("eps isn't a Double!");
+    let min_lns: usize = args[4].parse().expect("minLns isn't a Number!");
+
     let dimension: usize;
     let trajectories: Vec<Trajectory>;
 
@@ -74,6 +80,10 @@ fn main() {
     let thick_trajectories = partition_trajectories(trajectories);
     let line_segments = get_partition_line(&thick_trajectories);
 
+    // 执行聚类
+    let cluster_indexs = perform_dbscan(eps, min_lns, &line_segments);
+
+    // @TODO 构建聚类
   } else {
     println!("Please give me 4 input parameters(inputFilePath, outputFilePath, eps, minLns)!");
     println!("--e.g. cargo run deer_1995.tra testOut.txt 29 8");

@@ -135,14 +135,7 @@ pub fn get_partition_line(trajectories: &Vec<ThickTrajectory>) -> Vec<LineSegmen
         continue;
       }
 
-      let dimension = trajectory.get_dimension();
-      let mut line_segment = LineSegment::new(dimension * 2, trajectory.get_id(), i);
-      
-      for j in 0..dimension {
-        line_segment.get_mut_line_segment().set_nth_coordinate(j, *start_point.get_nth_coordinate(j).unwrap());
-        line_segment.get_mut_line_segment().set_nth_coordinate(j + dimension, *end_point.get_nth_coordinate(j).unwrap());
-      }
-
+      let line_segment = LineSegment::new(trajectory.get_id(), i, start_point, end_point);
       line_segments.push(line_segment);
     }
   }
