@@ -10,8 +10,9 @@ use traclus::{
     read_trajectory_lines, 
     FileError
   },
-  cluster_gen::{
-    partition_trajectory
+  partition_tra::{
+    partition_trajectories,
+    get_partition_line,
   }
 };
 
@@ -24,7 +25,7 @@ fn main() {
   // args[4] minLns
   if args.len() == 5 {
     let dimension: usize;
-    let mut trajectorys: Vec<Trajectory>;
+    let trajectories: Vec<Trajectory>;
 
     // 获得维度信息
     match read_info_lines(&args[1]) {
@@ -49,7 +50,7 @@ fn main() {
 
     // 获得轨迹信息
     match read_trajectory_lines(&args[1], dimension) {
-      Ok(trajs) => { trajectorys = trajs; },
+      Ok(trajs) => { trajectories = trajs; },
       Err(e) => {
         match e {
           FileError::DimensionMismatchError => {
@@ -70,9 +71,8 @@ fn main() {
     }
 
     // 划分轨迹
-    for mut trajectory in trajectorys {
-      partition_trajectory(&mut trajectory);
-    }
+    let thick_trajectories = partition_trajectories(trajectories);
+    let line_segments = get_partition_line(&thick_trajectories);
 
   } else {
     println!("Please give me 4 input parameters(inputFilePath, outputFilePath, eps, minLns)!");

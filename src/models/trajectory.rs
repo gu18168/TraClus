@@ -5,26 +5,29 @@ use crate::{
   }
 };
 
-pub struct Trajectory<'a> {
+pub struct Trajectory {
   id: usize,
   dimension: usize,
-  points: Vec<MultiDimenPoint>,
-  partition_point: Vec<&'a MultiDimenPoint>
+  points: Vec<MultiDimenPoint>
 }
 
-impl<'a> Trajectory<'a> {
+impl Trajectory {
   pub fn new(id: usize, dimension: usize) -> Self {
     Self {
       id,
       dimension,
-      points: Vec::new(),
-      partition_point: Vec::new()
+      points: Vec::new()
     }
   }
 
   /// 获得轨迹的 id
   pub fn get_id(&self) -> usize {
     self.id
+  }
+
+  /// 获得轨迹的维度
+  pub fn get_dimension(&self) -> usize {
+    self.dimension
   }
 
   /// 在簇中添加轨迹点
@@ -37,26 +40,8 @@ impl<'a> Trajectory<'a> {
     Ok(())
   }
 
-  /// 在簇中添加划分点
-  /// 
-  /// 因为划分点其实就是特殊的轨迹点，所以只用引用到轨迹点即可
-  /// 注意：这里将指定索引的轨迹点引用加入到划分点中
-  pub fn add_partition_point(&'a mut self, index: usize) -> Result<(), ModelError> {
-    if index >= self.points.len() { return Err(ModelError::MismatchIndex); }
-
-    self.partition_point.push(self.points.get(index).unwrap());
-    Ok(())
-  }
-
-  pub fn add_partition_points(&'a mut self, indexs: Vec<usize>) {
-    for index in indexs {
-      self.partition_point.push(self.points.get(index).unwrap());
-    }
-  }
-
-  /// 获取轨迹点集的读引用
-  pub fn get_points(&self) -> &Vec<MultiDimenPoint> {
-    &self.points
+  pub fn get_points(self) -> Vec<MultiDimenPoint> {
+    self.points
   }
 
   /// 获取指定索引的轨迹点

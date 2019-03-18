@@ -2,6 +2,6 @@ extern crate regex;
 
 pub mod models;
 pub mod file_io;
-pub mod cluster_gen;
+pub mod partition_tra;
 
-mod cluster_gen_util;
+mod distance_util;
