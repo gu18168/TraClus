@@ -81,7 +81,7 @@ fn main() {
     let line_segments = get_partition_line(&thick_trajectories);
 
     // 执行聚类
-    let cluster_indexs = perform_dbscan(eps, min_lns, &line_segments);
+    let (cluster_indexs, cluster_index) = perform_dbscan(eps, min_lns, &line_segments);
 
     // @TODO 构建聚类
   } else {

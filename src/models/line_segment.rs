@@ -25,4 +25,8 @@ impl<'a> LineSegment<'a> {
   pub fn extract_start_end_points(&self) -> (&MultiDimenPoint, &MultiDimenPoint) {
     (self.start_point, self.end_point)
   }
+
+  pub fn get_trajectory_id(&self) -> usize {
+    self.trajectory_id
+  }
 }

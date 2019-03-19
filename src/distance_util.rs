@@ -108,7 +108,7 @@ pub fn measure_parallel_distance(line_1_start: &MultiDimenPoint, line_1_end: &Mu
 }
 
 /// 计算两个向量的点乘
-fn compute_inner_product(vector_1: &MultiDimenPoint, vector_2: &MultiDimenPoint) -> f64 {
+pub fn compute_inner_product(vector_1: &MultiDimenPoint, vector_2: &MultiDimenPoint) -> f64 {
   let dimension = vector_1.get_dimension();
   let mut inner_product = 0.0;
 
@@ -120,7 +120,7 @@ fn compute_inner_product(vector_1: &MultiDimenPoint, vector_2: &MultiDimenPoint)
 }
 
 /// 计算一个向量的长度
-fn compute_vector_length(vector: &MultiDimenPoint) -> f64 {
+pub fn compute_vector_length(vector: &MultiDimenPoint) -> f64 {
   let mut square_sum = 0.0;
 
   for i in 0..vector.get_dimension() {

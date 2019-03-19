@@ -11,11 +11,11 @@ use crate::{
 static UNCLASSIFIED: i32 = -2;
 static NOISE: i32 = -1;
 
-pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>) -> Vec<i32> {
+pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>) -> (Vec<i32>, usize) {
   // 这个变量其实起到的是 F(a) -> b 的作用
   // a 是目前的线段索引，b 是该线段的簇索引
   let mut cluster_indexs: Vec<i32> = Vec::new();
-  let mut cluster_index = 0;
+  let mut cluster_index: usize = 0;
 
   // 所有的线段初始化
   let len = line_segments.len();
@@ -31,11 +31,11 @@ pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>
     }
   }
 
-  cluster_indexs
+  (cluster_indexs, cluster_index)
 }
 
 // 感觉是可以优化的
-fn expand_cluster(index: usize, cluster_index: i32, eps: f64, min_lns: usize,
+fn expand_cluster(index: usize, cluster_index: usize, eps: f64, min_lns: usize,
   line_segments: &Vec<LineSegment>, cluster_indexs: &mut Vec<i32>) -> bool 
 {
   let (line_1_start, line_1_end) = line_segments.get(index).unwrap().extract_start_end_points();
@@ -48,7 +48,7 @@ fn expand_cluster(index: usize, cluster_index: i32, eps: f64, min_lns: usize,
   }
 
   for i in 0..len {
-    cluster_indexs[seeds[i]] = cluster_index;
+    cluster_indexs[seeds[i]] = cluster_index as i32;
   }
 
   let mut index = 0;
@@ -64,7 +64,7 @@ fn expand_cluster(index: usize, cluster_index: i32, eps: f64, min_lns: usize,
           if temp_index == UNCLASSIFIED {
             seeds.push(temp_index as usize);
           }
-          cluster_indexs[result_seed] = cluster_index;
+          cluster_indexs[result_seed] = cluster_index as i32;
         }
       }
     }
