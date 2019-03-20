@@ -8,17 +8,15 @@ use crate::{
 pub struct Cluster {
   id: usize,
   dimension: usize,
-  density: usize,
   points: Vec<MultiDimenPoint>
 }
 
 impl Cluster {
-  pub fn new(id: usize, dimension: usize) -> Self {
+  pub fn new(id: usize, dimension: usize, points: Vec<MultiDimenPoint>) -> Self {
     Self {
       id,
       dimension,
-      density: 0,
-      points: Vec::new()
+      points
     }
   }
 
@@ -27,10 +25,12 @@ impl Cluster {
     self.id
   }
 
-  /// 设置簇的密度
-  /// 其实就是簇内含有的轨迹数量
-  pub fn set_density(&mut self, density: usize) {
-    self.density = density;
+  pub fn get_len(&self) -> usize {
+    self.points.len()
+  }
+
+  pub fn get_points(&self) -> &Vec<MultiDimenPoint> {
+    &self.points
   }
 
   /// 簇内增加点

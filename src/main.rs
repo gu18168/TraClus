@@ -8,6 +8,7 @@ use traclus::{
   file_io::{
     read_info_lines, 
     read_trajectory_lines, 
+    write_cluster,
     FileError
   },
   partition_tra::{
@@ -16,6 +17,10 @@ use traclus::{
   },
   dbscan::{
     perform_dbscan
+  },
+  cluster_gen::{
+    construct_line_segment_cluster,
+    construct_cluster
   }
 };
 
@@ -83,7 +88,12 @@ fn main() {
     // 执行聚类
     let (cluster_indexs, cluster_index) = perform_dbscan(eps, min_lns, &line_segments);
 
-    // @TODO 构建聚类
+    // 构建聚类
+    let line_segment_clusters = construct_line_segment_cluster(dimension, cluster_index, min_lns, cluster_indexs, line_segments);
+    let clusters = construct_cluster(line_segment_clusters, dimension);
+
+    // 写聚类信息到文件中
+    write_cluster(&args[2], &clusters);
   } else {
     println!("Please give me 4 input parameters(inputFilePath, outputFilePath, eps, minLns)!");
     println!("--e.g. cargo run deer_1995.tra testOut.txt 29 8");

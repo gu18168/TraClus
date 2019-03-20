@@ -41,6 +41,14 @@ impl LineSegmentCluster {
     self.enabled = true;
   }
 
+  pub fn get_points(self) -> Vec<MultiDimenPoint> {
+    self.points
+  }
+
+  pub fn get_enable(&self) -> bool {
+    self.enabled
+  }
+
   pub fn get_sin(&self) -> &f64 {
     &self.sin_theta
   }
@@ -49,8 +57,13 @@ impl LineSegmentCluster {
     &self.cos_theta
   }
 
+  pub fn add_point(&mut self, point: MultiDimenPoint) {
+    self.points.push(point);
+  }
+
   pub fn add_nth_direction_vector(&mut self, j: usize, value: f64) {
-    self.avg_direction_vector.set_nth_coordinate(j, value);
+    let origin = self.avg_direction_vector.get_nth_coordinate(j).unwrap();
+    self.avg_direction_vector.set_nth_coordinate(j, value + origin);
   }
 
   pub fn avg_nth_direction_vector(&mut self, j: usize) {

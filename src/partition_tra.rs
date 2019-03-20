@@ -31,17 +31,18 @@ fn partition_trajectory(trajectory: Trajectory) -> ThickTrajectory {
   // 添加起点到划分点中
   partition_indexs.insert(0);
 
-  let mut start_index = 1;
-  let mut length = 0;
+  let mut start_index = 0;
+  let mut length;
   let mut no_par_cost;
   let mut par_cost;
 
   // 执行 MDL 算法
   loop {
     no_par_cost = 0;
-    let end_index = start_index + length;
+    length = 1;
 
-    while end_index < len {
+    while start_index + length < len {
+      let end_index = start_index + length;
       no_par_cost += compute_model_cost(
         trajectory.get_point(end_index - 1).unwrap(), 
         trajectory.get_point(end_index).unwrap()
@@ -126,7 +127,7 @@ fn compute_encoding_cost(trajectory: &Trajectory, start_index: usize, end_index:
 pub fn get_partition_line(trajectories: &Vec<ThickTrajectory>) -> Vec<LineSegment> {
   let mut line_segments = Vec::new();
 
-  for trajectory in trajectories {
+  for (j, trajectory) in trajectories.iter().enumerate() {
     for i in 0..(trajectory.get_len() - 1) {
       let start_point = trajectory.get_partition_point(i).unwrap();
       let end_point = trajectory.get_partition_point(i + 1).unwrap();

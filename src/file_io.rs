@@ -2,10 +2,11 @@ use crate::{
   models::{
     multi_dimen_point::MultiDimenPoint,
     trajectory::Trajectory,
+    cluster::Cluster
   }
 };
-use std::fs::File;
-use std::io::{BufReader, BufRead};
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, BufRead, Write};
 use regex::Regex;
 
 pub enum FileError {
@@ -99,6 +100,23 @@ pub fn read_trajectory_lines(path: &str, dimension: usize) -> Result<Vec<Traject
     return Ok(trajectorys);
   } else {
     return Err(FileError::FileOpenError);
+  }
+}
+
+pub fn write_cluster(out_path: &str, clusters: &Vec<Cluster>) {
+  let mut file = OpenOptions::new().write(true).create(true)
+    .open(out_path).expect("File can't write");
+  
+  for cluster in clusters {
+    let info_line = cluster.get_id().to_string() + " cluster\tpoint num: " + &cluster.get_len().to_string() + "\n";
+    file.write_all(info_line.as_bytes()).expect("File can't write");
+    for point in cluster.get_points() {
+      let x = point.get_nth_coordinate(0).unwrap();
+      let y = point.get_nth_coordinate(1).unwrap();
+      let point_line = x.to_string() + " " + &y.to_string() + "\t";
+      file.write_all(point_line.as_bytes()).expect("File can't write");
+    }
+    file.write_all(b"\n").expect("File can't write");
   }
 }
 

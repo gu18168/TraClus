@@ -11,7 +11,7 @@ pub fn measure_distance_point_to_point(lp: &MultiDimenPoint, rp: &MultiDimenPoin
   let mut square_sum = 0.0;
 
   for i in 0..lp.get_dimension() {
-    square_sum += lp.get_nth_coordinate(i).unwrap().powf(2.0) + rp.get_nth_coordinate(i).unwrap().powf(2.0);
+    square_sum += (lp.get_nth_coordinate(i).unwrap() - rp.get_nth_coordinate(i).unwrap()).powi(2);
   }
 
   Some(square_sum.sqrt())
@@ -33,7 +33,11 @@ pub fn measure_distance_line_to_line(line_1_start: &MultiDimenPoint, line_1_end:
   let length_1 = measure_distance_point_to_point(line_1_start, line_1_end);
   let length_2 = measure_distance_point_to_point(line_2_start, line_2_end);
 
-  let perpendicular_distance = measure_perpendicular_distance(line_1_start, line_1_end, line_2_start, line_2_end);
+  let perpendicular_distance = if length_1 > length_2 {
+    measure_perpendicular_distance(line_1_start, line_1_end, line_2_start, line_2_end)
+  } else {
+    measure_perpendicular_distance(line_2_start, line_2_end, line_1_start, line_1_end)
+  };
   let angle_distance = if length_1 > length_2 {
     measure_angle_distance(line_1_start, line_1_end, line_2_start, line_2_end)
   } else {
