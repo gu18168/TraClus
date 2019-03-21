@@ -6,6 +6,10 @@ The original paper of this algorithm can be found at http://hanj.cs.illinois.edu
 The authors of the paper implemented the algorithm in C++, so it could be helpful to develop one in Rust for 
 other users to use.
 
+# Note
+
+The implementation only support **Two-dimensional** coordinate point.
+
 # Reference
 
 [1] Lee, Jae-Gil, Jiawei Han, and Kyu-Young Whang. "Trajectory clustering: a partition-and-group framework."

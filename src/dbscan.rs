@@ -1,7 +1,7 @@
 use crate::{
   models::{
     line_segment::LineSegment,
-    multi_dimen_point::MultiDimenPoint
+    point::Point
   },
   distance_util::{
     measure_distance_line_to_line
@@ -77,8 +77,8 @@ fn expand_cluster(line_segment_index: usize, cluster_index: usize, eps: f64, min
 /// 计算一条线段的 eps 邻居集
 fn compute_eps_neighborhood(
   eps: f64,
-  line_1_start: &MultiDimenPoint, 
-  line_1_end: &MultiDimenPoint, 
+  line_1_start: &Point, 
+  line_1_end: &Point, 
   line_segments: &Vec<LineSegment>) -> Vec<usize> 
 {
   let mut result = Vec::new();

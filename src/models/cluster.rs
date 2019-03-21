@@ -1,21 +1,18 @@
 use crate::{
   models::{
-    multi_dimen_point::MultiDimenPoint,
-    model_error::ModelError
+    point::Point
   }
 };
 
 pub struct Cluster {
   id: usize,
-  dimension: usize,
-  points: Vec<MultiDimenPoint>
+  points: Vec<Point>
 }
 
 impl Cluster {
-  pub fn new(id: usize, dimension: usize, points: Vec<MultiDimenPoint>) -> Self {
+  pub fn new(id: usize, points: Vec<Point>) -> Self {
     Self {
       id,
-      dimension,
       points
     }
   }
@@ -25,21 +22,18 @@ impl Cluster {
     self.id
   }
 
+  /// 获得簇的长度
   pub fn get_len(&self) -> usize {
     self.points.len()
   }
 
-  pub fn get_points(&self) -> &Vec<MultiDimenPoint> {
+  /// 获得簇内所有点
+  pub fn get_points(&self) -> &Vec<Point> {
     &self.points
   }
 
   /// 簇内增加点
-  /// 
-  /// 注意：若添加的点维度与簇维度不同将会返回 Err
-  pub fn add_point(&mut self, point: MultiDimenPoint) -> Result<(), ModelError> {
-    if point.get_dimension() != self.dimension { return Err(ModelError::MismatchDimension); }
-
+  pub fn add_point(&mut self, point: Point) {
     self.points.push(point);
-    Ok(())
   }
 }

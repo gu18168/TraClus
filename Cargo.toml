@@ -9,4 +9,3 @@ name = "traclus"
 path = "src/main.rs"
 
 [dependencies]
-regex = "1.1.2"

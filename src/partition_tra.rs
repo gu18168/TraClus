@@ -2,7 +2,7 @@ use crate::{
   models::{
     trajectory::Trajectory,
     thick_trajectory::ThickTrajectory,
-    multi_dimen_point::MultiDimenPoint,
+    point::Point,
     line_segment::LineSegment
   },
   distance_util::{
@@ -74,10 +74,9 @@ fn partition_trajectory(trajectory: Trajectory) -> ThickTrajectory {
   partition_indexs.insert(len - 1);
 
   let id = trajectory.get_id();
-  let dimension = trajectory.get_dimension();
   let points = trajectory.get_points();
   // 获得所有的轨迹点
-  let partition_points: Vec<MultiDimenPoint> = points.into_iter()
+  let partition_points: Vec<Point> = points.into_iter()
     .enumerate()
     .filter_map(|(index, point)| {
       if partition_indexs.contains(&index) { 
@@ -87,18 +86,15 @@ fn partition_trajectory(trajectory: Trajectory) -> ThickTrajectory {
     })
     .collect();
 
-  ThickTrajectory::new(id, dimension, partition_points)
+  ThickTrajectory::new(id, partition_points)
 }
 
 /// 计算 L(H)
-fn compute_model_cost(start_point: &MultiDimenPoint, end_point: &MultiDimenPoint) -> usize {
-  if let Some(distance) = measure_distance_point_to_point(start_point, end_point) {
-    if distance < 1.0 { return 0; }
+fn compute_model_cost(start_point: &Point, end_point: &Point) -> usize {
+  let distance = measure_distance_point_to_point(start_point, end_point);
+  if distance < 1.0 { return 0; }
 
-    distance.log2().ceil() as usize
-  } else {
-    0
-  }
+  distance.log2().ceil() as usize
 }
 
 // 计算 L(D|H)
@@ -127,12 +123,12 @@ fn compute_encoding_cost(trajectory: &Trajectory, start_index: usize, end_index:
 pub fn get_partition_line(trajectories: &Vec<ThickTrajectory>) -> Vec<LineSegment> {
   let mut line_segments = Vec::new();
 
-  for (j, trajectory) in trajectories.iter().enumerate() {
+  for trajectory in trajectories.iter() {
     for i in 0..(trajectory.get_len() - 1) {
       let start_point = trajectory.get_partition_point(i).unwrap();
       let end_point = trajectory.get_partition_point(i + 1).unwrap();
 
-      if measure_distance_point_to_point(start_point, end_point).unwrap() < MIN_LINE_SEGMENT_LENGTH {
+      if measure_distance_point_to_point(start_point, end_point) < MIN_LINE_SEGMENT_LENGTH {
         continue;
       }
 
