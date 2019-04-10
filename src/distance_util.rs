@@ -48,6 +48,7 @@ pub fn measure_distance_line_to_line(line_1_start: &Point, line_1_end: &Point,
 }
 
 /// 计算两条线段的垂直距离
+/// 注意，默认第一条线段比第二条线段长
 pub fn measure_perpendicular_distance(line_1_start: &Point, line_1_end: &Point,
   line_2_start: &Point, line_2_end: &Point) -> f64 
 {
@@ -60,6 +61,7 @@ pub fn measure_perpendicular_distance(line_1_start: &Point, line_1_end: &Point,
 }
 
 /// 计算两条线段的角度距离
+/// 注意，默认第一条线段比第二条线段长
 pub fn measure_angle_distance(line_1_start: &Point, line_1_end: &Point,
   line_2_start: &Point, line_2_end: &Point) -> f64 
 {
@@ -86,6 +88,7 @@ pub fn measure_angle_distance(line_1_start: &Point, line_1_end: &Point,
 }
 
 /// 计算两条线段的平行距离
+/// 注意，默认第一条线段比第二条线段长
 pub fn measure_parallel_distance(line_1_start: &Point, line_1_end: &Point,
   line_2_start: &Point, line_2_end: &Point) -> f64
 {

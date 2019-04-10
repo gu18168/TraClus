@@ -18,6 +18,7 @@ static MIN_LINE_SEGMENT_LENGTH: f64 = 50.0;
 
 /// 将轨迹抽象为划分轨迹
 pub fn partition_trajectories(trajectories: Vec<Trajectory>) -> Vec<ThickTrajectory> {
+  // 直接所有权转移
   trajectories.into_iter()
     .map(|trajectory| partition_trajectory(trajectory))
     .collect()
@@ -132,7 +133,7 @@ pub fn get_partition_line(trajectories: &Vec<ThickTrajectory>) -> Vec<LineSegmen
         continue;
       }
 
-      let line_segment = LineSegment::new(trajectory.get_id(), i, start_point, end_point);
+      let line_segment = LineSegment::new(trajectory.get_id(), start_point, end_point);
       line_segments.push(line_segment);
     }
   }

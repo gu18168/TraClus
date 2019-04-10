@@ -1,96 +1,102 @@
 use crate::{
   models::{
-    line_segment::LineSegment,
-    point::Point
+    merge_indexs::MergeIndexs,
+    line_segment::LineSegment
   },
   distance_util::{
     measure_distance_line_to_line
   }
 };
+use rayon::ThreadPoolBuilder;
+use rayon::prelude::*;
+use uuid::Uuid;
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex, RwLock};
 
-static UNCLASSIFIED: i32 = -2;
 static NOISE: i32 = -1;
 
 pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>) -> (Vec<i32>, usize) {
-  // 这个变量其实起到的是 F(a) -> b 的作用
-  // a 是目前的线段索引，b 是该线段的簇索引
+  let pool = ThreadPoolBuilder::new().num_threads(16).build().unwrap();
+
   let len = line_segments.len();
-  let mut cluster_indexs: Vec<i32> = vec![UNCLASSIFIED; len];
-  let mut cluster_index: usize = 0;
+
+  let merge_indexs = MergeIndexs::new();
+  let merge_indexs = Arc::new(Mutex::new(merge_indexs));
+  let core_uuids: HashSet<&Uuid> = HashSet::new();
+  let core_uuids = Arc::new(RwLock::new(core_uuids));
 
   for i in 0..len {
-    if *cluster_indexs.get(i).unwrap() == UNCLASSIFIED
-      && expand_cluster(i, cluster_index, eps, min_lns, line_segments, &mut cluster_indexs)
-    {
-      cluster_index += 1;
-    }
-  }
+    let line_1 = line_segments.get(i).unwrap();
+    let (line_1_start, line_1_end) = line_1.extract_start_end_points();
+    let iter_of_line_segments = line_segments.iter().enumerate();
 
-  (cluster_indexs, cluster_index)
-}
+    let clone_merge_indexs = Arc::clone(&merge_indexs);
+    let clone_core_uuids = Arc::clone(&core_uuids);
 
-// 感觉是可以优化的
-fn expand_cluster(line_segment_index: usize, cluster_index: usize, eps: f64, min_lns: usize,
-  line_segments: &Vec<LineSegment>, cluster_indexs: &mut Vec<i32>) -> bool 
-{
-  let line_segment = line_segments.get(line_segment_index).unwrap();
-  let (line_start, line_end) = line_segment.extract_start_end_points();
-  let mut seeds = compute_eps_neighborhood(eps, line_start, line_end, line_segments);
+    let is_core = pool.install(|| {
+      let mut cluster_size: usize = 0;
+      let mut can_merge_index: Vec<usize> = Vec::new();
 
-  let len = seeds.len();
-  if len < min_lns {
-    cluster_indexs[line_segment_index] = NOISE;
-    return false;
-  }
+      for (index, line_2) in iter_of_line_segments {
+        let (line_2_start, line_2_end) = line_2.extract_start_end_points();
+        if measure_distance_line_to_line(line_1_start, line_1_end, line_2_start, line_2_end) <= eps {
+          cluster_size += 1;
 
-  for i in 0..len {
-    cluster_indexs[seeds[i]] = cluster_index as i32;
-  }
-
-  let mut index = 0;
-  while index < seeds.len() {
-    let seed = seeds[index];
-    // 跳过自身，因为自身肯定在邻居集内
-    if seed == line_segment_index { index += 1; continue; }
-
-    let (line_1_start, line_1_end) = line_segments.get(seed).unwrap().extract_start_end_points();
-    let result_seeds = compute_eps_neighborhood(eps, line_1_start, line_1_end, line_segments);
-
-    if result_seeds.len() >= min_lns {
-      for result_seed in result_seeds {
-        let temp_index = cluster_indexs[result_seed];
-        if temp_index < 0 {
-          if temp_index == UNCLASSIFIED {
-            seeds.push(result_seed);
+          if clone_core_uuids.read().unwrap().contains(line_2.get_uuid()) {
+            can_merge_index.push(index);
           }
-          cluster_indexs[result_seed] = cluster_index as i32;
         }
       }
-    }
 
-    index += 1;
-  }
+      if cluster_size >= min_lns {
+        if can_merge_index.len() > 0 {
+          clone_merge_indexs.lock().unwrap().set_to_min(&can_merge_index, i);
+        } else {
+          clone_merge_indexs.lock().unwrap().push(i);
+        }
 
-  true
-}
+        return true;
+      }
 
-/// 计算一条线段的 eps 邻居集
-fn compute_eps_neighborhood(
-  eps: f64,
-  line_1_start: &Point, 
-  line_1_end: &Point, 
-  line_segments: &Vec<LineSegment>) -> Vec<usize> 
-{
-  let mut result = Vec::new();
+      false
+    });
 
-  for i in 0..line_segments.len() {
-    let (line_2_start, line_2_end) = line_segments.get(i).unwrap().extract_start_end_points();
-    let distance = measure_distance_line_to_line(line_1_start, line_1_end, line_2_start, line_2_end);
-
-    if distance <= eps { 
-      result.push(i); 
+    if is_core {
+      core_uuids.write().unwrap().insert(line_1.get_uuid());
     }
   }
 
-  result
+  merge_indexs.lock().unwrap().correct_indexs();
+  let merge_cluster_indexs = merge_indexs.lock().unwrap().map_indexs();
+
+  let mut result: Vec<i32> = vec![NOISE; line_segments.len()];
+  
+
+  for (index, merge_cluster_index) in merge_cluster_indexs.iter().enumerate() {
+    let mut core_segements: Vec<&LineSegment> = Vec::new();
+
+    for index in merge_cluster_index {
+      core_segements.push(line_segments.get(*index).unwrap());
+    }
+
+    let others: Vec<usize> = line_segments.par_iter()
+      .enumerate()
+      .filter_map(|(i, line_segment)| {
+        let (line_1_start, line_1_end) = line_segment.extract_start_end_points();
+        for core_segement in core_segements.iter() {
+          let (line_2_start, line_2_end) = core_segement.extract_start_end_points();
+          if measure_distance_line_to_line(line_1_start, line_1_end, line_2_start, line_2_end) <= eps {
+            return Some(i);
+          }
+        }
+        return None;
+      })
+      .collect();
+
+    for other in others {
+      result[other] = index as i32;
+    }
+  }
+
+  (result, merge_cluster_indexs.len())
 }

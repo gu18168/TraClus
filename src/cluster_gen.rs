@@ -100,6 +100,7 @@ pub fn construct_cluster(line_segment_clusters: Vec<LineSegmentCluster>) -> Vec<
 
 fn get_candidate_points(cluster: &mut LineSegmentCluster, line_segment: &LineSegment, line_index: usize) {
   let (start_point, end_point) = line_segment.extract_start_end_points();
+  // ordering_value 是点 X 坐标在平均方向上的投影
   let ordering_value_1 = get_x_rotation(
     start_point.get_x(), 
     start_point.get_y(),
@@ -109,8 +110,8 @@ fn get_candidate_points(cluster: &mut LineSegmentCluster, line_segment: &LineSeg
     end_point.get_y(),
     cluster.get_cos(), cluster.get_sin());
 
-  let candidate_point_1 = CandidatePoint::new(line_index, ordering_value_1, true);
-  let candidate_point_2 = CandidatePoint::new(line_index, ordering_value_2, false);
+  let candidate_point_1 = CandidatePoint::new(line_index, ordering_value_1);
+  let candidate_point_2 = CandidatePoint::new(line_index, ordering_value_2);
   cluster.push(candidate_point_1);
   cluster.push(candidate_point_2);
 
@@ -154,6 +155,8 @@ fn compute_representative_lines(min_lns: usize,
     insertion_list.clear();
     deletion_list.clear();
 
+    // 感觉这里是映射点一个个跳，但是映射点只是起点和终点的映射，中间点并没有
+    // 应该是一条线段的起终点映射包含这个点就可以加入，但是感觉很麻烦
     loop {
       candidate_point = cluster.get_nth_candidate_point(iter);
       iter += 1;
@@ -176,12 +179,19 @@ fn compute_representative_lines(min_lns: usize,
       }
     }
 
+    // 感觉就算是重复也没有什么关系，只是需要清一下 line_segments_list
     for insertion in insertion_list.iter() {
+      // 如果同一条线段能在同一个 ordering 出现两次
+      // 可以证明这条线段就是一个点或是垂直与平均方向的线
       if deletion_list.contains(insertion) {
         deletion_list.remove(insertion);
         line_segments_list.remove(insertion);
       }
 
+      // 如果一条轨迹能在同一个 ordering 出现两次还不是同一条线段
+      // 除了掉头的诡异情况，就是两条相邻线段的终点和起点，这个点就是同一个点
+      // 所以需要删除，而这个点只能出现一次，所以直接 break 即可
+      // 先出现的终点代表的线段可以删除，因为之前已经处理过了
       let mut del: i32 = -1;
       for deletion in deletion_list.iter() {
         if line_segments.get(*insertion).unwrap().get_trajectory_id() 

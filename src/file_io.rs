@@ -30,19 +30,19 @@ pub fn read_trajectory_lines(path: &str) -> Result<Vec<Trajectory>, FileError> {
     // 根据文件构建轨迹
     for line in line_of_contents.lines().filter_map(|result| result.ok()) {
       let trajectory_infos: Vec<&str> = line.split(' ').collect();
+      let len = trajectory_infos.len();
+
+      // 点坐标的数量应该是维度的倍数
+      // 注意要减去第一个 id 点
+      if (len - 1) % 2 != 0 {
+        return Err(FileError::DimensionMismatchError);
+      }
 
       if let Ok(trajectory_id) = trajectory_infos[0].parse::<usize>() { 
         let mut trajectory = Trajectory::new(trajectory_id);
-        let len = trajectory_infos.len();
-        let mut i = 1;
-
-        // 点坐标的数量应该是维度的倍数
-        // 注意要减去第一个 id 点
-        if (len - 1) % 2 != 0 {
-          return Err(FileError::DimensionMismatchError);
-        }
 
         // 构建轨迹点并加入到轨迹中
+        let mut i = 1;
         while i < len {
           let mut point: Point = Point::init();
 
