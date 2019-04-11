@@ -1,21 +1,20 @@
+//! 轨迹，从文件中直接读取生成的对象
 use crate::{
   models::{
-    multi_dimen_point::MultiDimenPoint,
-    model_error::ModelError
+    point::Point
   }
 };
 
 pub struct Trajectory {
   id: usize,
-  dimension: usize,
-  points: Vec<MultiDimenPoint>
+  points: Vec<Point>
 }
 
 impl Trajectory {
-  pub fn new(id: usize, dimension: usize) -> Self {
+  /// 初始化一条轨迹
+  pub fn new(id: usize) -> Self {
     Self {
       id,
-      dimension,
       points: Vec::new()
     }
   }
@@ -25,27 +24,18 @@ impl Trajectory {
     self.id
   }
 
-  /// 获得轨迹的维度
-  pub fn get_dimension(&self) -> usize {
-    self.dimension
-  }
-
-  /// 在簇中添加轨迹点
-  /// 
-  /// 注意：若添加的点维度与轨迹维度不同将会返回 Err
-  pub fn add_point(&mut self, point: MultiDimenPoint) -> Result<(), ModelError> {
-    if point.get_dimension() != self.dimension { return Err(ModelError::MismatchDimension); }
-
+  /// 给轨迹添加轨迹点
+  pub fn add_point(&mut self, point: Point) {
     self.points.push(point);
-    Ok(())
   }
 
-  pub fn get_points(self) -> Vec<MultiDimenPoint> {
+  /// 获得轨迹所有轨迹点的所有权
+  pub fn get_points(self) -> Vec<Point> {
     self.points
   }
 
   /// 获取指定索引的轨迹点
-  pub fn get_point(&self, index: usize) -> Option<&MultiDimenPoint> {
+  pub fn get_point(&self, index: usize) -> Option<&Point> {
     self.points.get(index)
   }
 

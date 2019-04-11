@@ -1,15 +1,13 @@
 pub struct CandidatePoint {
   ordering_value: f64,
-  line_segment_id: usize,
-  is_start: bool
+  line_segment_id: usize
 }
 
 impl CandidatePoint {
-  pub fn new(line_segment_id: usize, ordering_value: f64, is_start: bool) -> Self {
+  pub fn new(line_segment_id: usize, ordering_value: f64) -> Self {
     Self {
       ordering_value,
-      line_segment_id,
-      is_start
+      line_segment_id
     }
   }
 

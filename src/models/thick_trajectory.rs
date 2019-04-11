@@ -1,37 +1,36 @@
+//! 划分后轨迹，经过 MDL 算法浓缩过的轨迹
 use crate::{
   models::{
-    multi_dimen_point::MultiDimenPoint
+    point::Point
   }
 };
 
 pub struct ThickTrajectory {
   id: usize,
-  dimension: usize,
-  partition_points: Vec<MultiDimenPoint>
+  partition_points: Vec<Point>
 }
 
 impl ThickTrajectory {
-  pub fn new(id: usize, dimension: usize, partition_points: Vec<MultiDimenPoint>) -> Self {
+  /// 创建一条划分后轨迹
+  pub fn new(id: usize, partition_points: Vec<Point>) -> Self {
     Self {
       id,
-      dimension,
       partition_points
     }
   }
 
+  /// 获得轨迹长度
   pub fn get_len(&self) -> usize {
     self.partition_points.len()
   }
 
-  pub fn get_dimension(&self) -> usize {
-    self.dimension
-  }
-
+  /// 获得轨迹的 id
   pub fn get_id(&self) -> usize {
     self.id
   }
 
-  pub fn get_partition_point(&self, index: usize) -> Option<&MultiDimenPoint> {
+  /// 获得指定索引的划分点
+  pub fn get_partition_point(&self, index: usize) -> Option<&Point> {
     self.partition_points.get(index)
   }
 }

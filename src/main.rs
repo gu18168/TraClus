@@ -6,7 +6,6 @@ use traclus::{
     trajectory::Trajectory
   },
   file_io::{
-    read_info_lines, 
     read_trajectory_lines, 
     write_cluster,
     FileError
@@ -35,32 +34,10 @@ fn main() {
     let eps: f64 = args[3].parse().expect("eps isn't a Double!");
     let min_lns: usize = args[4].parse().expect("minLns isn't a Number!");
 
-    let dimension: usize;
     let trajectories: Vec<Trajectory>;
 
-    // 获得维度信息
-    match read_info_lines(&args[1]) {
-      Ok(dimen) => {
-        dimension = dimen;
-      }
-      Err(e) => {
-        match e {
-          FileError::FileOpenError => {
-            eprintln!("Can't open the input file!");
-          }
-          FileError::DimensionError => {
-            eprintln!("The type of Dimension isn't a usize!");
-          }
-          _ => {
-            eprintln!("Something wrong!");
-          }
-        }
-        return;
-      }
-    }
-
     // 获得轨迹信息
-    match read_trajectory_lines(&args[1], dimension) {
+    match read_trajectory_lines(&args[1]) {
       Ok(trajs) => { trajectories = trajs; },
       Err(e) => {
         match e {
@@ -89,8 +66,8 @@ fn main() {
     let (cluster_indexs, cluster_index) = perform_dbscan(eps, min_lns, &line_segments);
 
     // 构建聚类
-    let line_segment_clusters = construct_line_segment_cluster(dimension, cluster_index, min_lns, cluster_indexs, line_segments);
-    let clusters = construct_cluster(line_segment_clusters, dimension);
+    let line_segment_clusters = construct_line_segment_cluster(cluster_index, min_lns, cluster_indexs, line_segments);
+    let clusters = construct_cluster(line_segment_clusters);
 
     // 写聚类信息到文件中
     write_cluster(&args[2], &clusters);

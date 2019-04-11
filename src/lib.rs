@@ -1,4 +1,4 @@
-extern crate regex;
+extern crate rayon;
 
 pub mod models;
 pub mod file_io;
