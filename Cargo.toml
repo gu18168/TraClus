@@ -9,5 +9,7 @@ name = "traclus"
 path = "src/main.rs"
 
 [dependencies]
+chrono = "0.4.6"
+csv = "1.0.5"
 rayon = "1.0.3"
 uuid = { version = "0.7.2", features = ["v4"] }

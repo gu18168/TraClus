@@ -65,23 +65,15 @@ pub fn measure_perpendicular_distance(line_1_start: &Point, line_1_end: &Point,
 pub fn measure_angle_distance(line_1_start: &Point, line_1_end: &Point,
   line_2_start: &Point, line_2_end: &Point) -> f64 
 {
-  let vector_1 = Point::new(
-    line_1_end.get_x() - line_1_start.get_x(),
-    line_1_end.get_y() - line_1_start.get_y()
-  );
   let vector_2 = Point::new(
     line_2_end.get_x() - line_2_start.get_x(),
-    line_2_end.get_y() - line_2_start.get_y()
+    line_2_end.get_y() - line_2_start.get_y(),
+    0.0,
+    0
   );
-
-  let vector_1_length = compute_vector_length(&vector_1);
   let vector_2_length = compute_vector_length(&vector_2);
 
-  if vector_1_length == 0.0 || vector_2_length == 0.0 { return 0.0; }
-
-  let inner_product = compute_inner_product(&vector_1, &vector_2);
-  let mut cos_theta = inner_product / (vector_1_length * vector_2_length);
-  cos_theta = if cos_theta > 1.0 { 1.0 } else if cos_theta < -1.0 { -1.0 } else { cos_theta };
+  let cos_theta = compute_vectors_cos(line_1_start, line_1_end, line_2_start, line_2_end);
   let sin_theta = (1.0 - cos_theta.powi(2)).sqrt();
 
   vector_2_length * sin_theta
@@ -129,15 +121,48 @@ pub fn compute_vector_length(vector: &Point) -> f64 {
   square_sum.sqrt()
 }
 
+/// 计算两个向量之间的 cos
+pub fn compute_vectors_cos(line_1_start: &Point, line_1_end: &Point,
+  line_2_start: &Point, line_2_end: &Point) -> f64 
+{
+  let vector_1 = Point::new(
+    line_1_end.get_x() - line_1_start.get_x(),
+    line_1_end.get_y() - line_1_start.get_y(),
+    0.0,
+    0
+  );
+  let vector_2 = Point::new(
+    line_2_end.get_x() - line_2_start.get_x(),
+    line_2_end.get_y() - line_2_start.get_y(),
+    0.0,
+    0
+  );
+
+  let vector_1_length = compute_vector_length(&vector_1);
+  let vector_2_length = compute_vector_length(&vector_2);
+
+  if vector_1_length == 0.0 || vector_2_length == 0.0 { return 0.0; }
+
+  let inner_product = compute_inner_product(&vector_1, &vector_2);
+  let mut cos_theta = inner_product / (vector_1_length * vector_2_length);
+  cos_theta = if cos_theta > 1.0 { 1.0 } else if cos_theta < -1.0 { -1.0 } else { cos_theta };
+
+  cos_theta
+}
+
 // 获得一个点对于一条线段的投影点
 fn project_point_to_line(point: &Point, line_start: &Point, line_end: &Point) -> (f64, Point) {
   let vector_1 = Point::new(
     point.get_x() - line_start.get_x(),
-    point.get_y() - line_start.get_y()
+    point.get_y() - line_start.get_y(),
+    0.0,
+    0
   );
   let vector_2 = Point::new(
     line_end.get_x() - line_start.get_x(),
-    line_end.get_y() - line_start.get_y()
+    line_end.get_y() - line_start.get_y(),
+    0.0,
+    0
   );
 
   // 获得投影点的坐标
@@ -145,7 +170,9 @@ fn project_point_to_line(point: &Point, line_start: &Point, line_end: &Point) ->
   let cofficient = compute_inner_product(&vector_1, &vector_2) / compute_inner_product(&vector_2, &vector_2);
   let project_point = Point::new(
     line_start.get_x() + cofficient * vector_2.get_x(),
-    line_start.get_y() + cofficient * vector_2.get_y()
+    line_start.get_y() + cofficient * vector_2.get_y(),
+    0.0,
+    0
   );
 
   (cofficient, project_point)

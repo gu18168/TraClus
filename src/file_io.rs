@@ -5,9 +5,12 @@ use crate::{
     cluster::Cluster
   }
 };
+use chrono::prelude::*;
+use csv::Reader;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufRead, Write};
 
+#[derive(Debug)]
 pub enum FileError {
   // 文件打开有误
   FileOpenError,
@@ -73,6 +76,58 @@ pub fn read_trajectory_lines(path: &str) -> Result<Vec<Trajectory>, FileError> {
     return Ok(trajectorys);
   } else {
     return Err(FileError::FileOpenError);
+  }
+}
+
+/// 从 csv 文件读取轨迹行
+pub fn read_trajectory_lines_from_csv(path: &str) -> Result<Vec<Trajectory>, FileError> {
+  let open_file = Reader::from_path(path);
+
+  if let Ok(mut rdr) = open_file {
+    let mut trajectorys: Vec<Trajectory> = Vec::new();
+    let mut prev_mmsi = String::from("");
+
+    for record in rdr.records().filter_map(|result| result.ok()) {
+      let mmsi = record.get(0).unwrap();
+      let sog: f64 = record.get(1).unwrap().parse().expect("SOG must be a f64!");
+      let longitude: f64 = record.get(2).unwrap().parse().expect("longitude must be a f64!");
+      let latitude: f64 = record.get(3).unwrap().parse().expect("latitude must be a f64!");
+      let hour: usize = record.get(4).unwrap().parse().expect("Hour must be a usize!");
+      let mins: usize = record.get(5).unwrap().parse().expect("Mins must be a usize!");
+      let secs: usize = record.get(6).unwrap().parse().expect("Secs must be a usize!");
+
+      let timestamp = time_to_second(
+        &(String::from("20181222_") + 
+        hour.to_string().as_str() + 
+        mins.to_string().as_str() + 
+        secs.to_string().as_str())
+      ).expect("Time format must be %Y%m%d_%H%M%S!");
+
+      let point = Point::new(longitude, latitude, sog, timestamp);
+
+      if prev_mmsi != mmsi {
+        let mut trajectory = Trajectory::new(trajectorys.len());
+        trajectory.add_point(point);
+        trajectorys.push(trajectory);
+        prev_mmsi = String::from(mmsi);
+      } else {
+        let index = trajectorys.len() - 1;
+        trajectorys[index].add_point(point);
+      }
+    }
+
+    return Ok(trajectorys);
+  } else {
+    return Err(FileError::FileOpenError);
+  }
+}
+
+fn time_to_second(time: &str) -> Result<i64, FileError> {
+  let date = Utc.datetime_from_str(time, "%Y%m%d_%H%M%S");
+  if let Ok(date) = date {
+    return Ok(date.timestamp());
+  } else {
+    return Err(FileError::DimensionPointError);
   }
 }
 

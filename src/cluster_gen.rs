@@ -40,7 +40,7 @@ pub fn construct_line_segment_cluster(max_index: usize, min_lns: usize,
     }
   }
 
-  let vector = Point::new(1.0, 0.0);
+  let vector = Point::new(1.0, 0.0, 0.0, 0);
   for i in 0..max_index {
     let cluster_entry = line_segment_clusters.get_mut(i).unwrap();
 
@@ -237,17 +237,20 @@ fn compute_representative_lines(min_lns: usize,
 fn compute_cluster_point(cluster: &LineSegmentCluster, line_segments: &Vec<LineSegment>,
   value: f64, line_segments_list: &HashSet<usize>) -> Point
 {
-  let line_segments_len = line_segments_list.len();
+  let line_segments_len = line_segments_list.len() as f64;
   let mut cluster_point = Point::init();
   let mut sweep_point: Point;
 
   for line_segment_id in line_segments_list {
     sweep_point = get_sweep_point(cluster, value, line_segments.get(*line_segment_id).unwrap());
-    let coordinate_x = cluster_point.get_x() + sweep_point.get_x() / line_segments_len as f64;
-    let coordinate_y = cluster_point.get_y() + sweep_point.get_y() / line_segments_len as f64;
+    let coordinate_x = cluster_point.get_x() + sweep_point.get_x() / line_segments_len;
+    let coordinate_y = cluster_point.get_y() + sweep_point.get_y() / line_segments_len;
+    let coordinate_sog = cluster_point.get_sog() + sweep_point.get_sog() / line_segments_len;
 
     cluster_point.set_x(coordinate_x);
     cluster_point.set_y(coordinate_y);
+    // 平均速度
+    cluster_point.set_sog(coordinate_sog);
   }
 
   let orig_x = get_x_rev_rotation(
@@ -282,7 +285,8 @@ fn get_sweep_point(cluster: &LineSegmentCluster, value: f64, line_segment: &Line
     cluster.get_cos(), cluster.get_sin());
 
   let cofficient = (value - new_start_x) / (new_end_x - new_start_x);
-  let sweep_point = Point::new(value, new_start_y + cofficient * (new_end_y - new_start_y));
+  let sweep_point = Point::new(value, new_start_y + cofficient * (new_end_y - new_start_y), 
+    start_point.get_sog() + cofficient * (end_point.get_sog() - start_point.get_sog()), 0);
 
   sweep_point
 }

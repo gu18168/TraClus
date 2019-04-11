@@ -39,7 +39,11 @@ pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>
 
       for (index, line_2) in iter_of_line_segments {
         let (line_2_start, line_2_end) = line_2.extract_start_end_points();
-        if measure_distance_line_to_line(line_1_start, line_1_end, line_2_start, line_2_end) <= eps {
+        // 距离相近，平均速度相近，加速度方向相同
+        if measure_distance_line_to_line(line_1_start, line_1_end, line_2_start, line_2_end) <= eps
+          && (line_1.get_sog() - line_2.get_sog()).abs() < 2.0
+          && line_1.get_acc() * line_2.get_acc() >= 0.0
+        {
           cluster_size += 1;
 
           if clone_core_uuids.read().unwrap().contains(line_2.get_uuid()) {
@@ -71,7 +75,6 @@ pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>
 
   let mut result: Vec<i32> = vec![NOISE; line_segments.len()];
   
-
   for (index, merge_cluster_index) in merge_cluster_indexs.iter().enumerate() {
     let mut core_segements: Vec<&LineSegment> = Vec::new();
 

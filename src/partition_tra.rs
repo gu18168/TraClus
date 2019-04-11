@@ -8,7 +8,8 @@ use crate::{
   distance_util::{
     measure_distance_point_to_point,
     measure_perpendicular_distance,
-    measure_angle_distance
+    measure_angle_distance,
+    compute_vectors_cos
   }
 };
 use std::collections::HashSet;
@@ -58,7 +59,15 @@ fn partition_trajectory(trajectory: Trajectory) -> ThickTrajectory {
         end_index
       );
 
-      if no_par_cost + MDL_COST_ADWANTAGE < par_cost {
+      // 只用比较最后一段，因为前面的都已经通过了才会到这一步
+      let a_cost = compute_acc_cost(
+        trajectory.get_point(start_index).unwrap(), 
+        trajectory.get_point(end_index).unwrap(),
+        trajectory.get_point(end_index - 1).unwrap(), 
+        trajectory.get_point(end_index).unwrap()
+      );
+
+      if no_par_cost + MDL_COST_ADWANTAGE < par_cost || a_cost > 0.5 || a_cost < -0.2 {
         partition_indexs.insert(end_index - 1);
         start_index = end_index - 1;
         length = 0;
@@ -120,6 +129,19 @@ fn compute_encoding_cost(trajectory: &Trajectory, start_index: usize, end_index:
   encoding_cost
 }
 
+// 计算加速度差值
+fn compute_acc_cost(start_point: &Point, end_point: &Point, line_start_point: &Point, line_end_point: &Point) -> f64 {
+  let a_1 = (end_point.get_sog() - start_point.get_sog()) / (end_point.get_timestamp() - start_point.get_timestamp()) as f64;
+  let a_2 = (line_end_point.get_sog() - line_start_point.get_sog()) / (line_end_point.get_timestamp() - line_start_point.get_timestamp()) as f64;
+
+  let cos_theta = compute_vectors_cos(start_point, end_point, line_start_point, line_end_point);
+
+  let a_max = if a_1 >= a_2 { a_1 } else { a_2 };
+  let a_min = if a_1 < a_2 { a_1 } else { a_2 };
+
+  cos_theta * ( a_min / a_max )
+}
+
 /// 将轨迹的划分点相连成为线段存入数组中
 pub fn get_partition_line(trajectories: &Vec<ThickTrajectory>) -> Vec<LineSegment> {
   let mut line_segments = Vec::new();
@@ -133,7 +155,9 @@ pub fn get_partition_line(trajectories: &Vec<ThickTrajectory>) -> Vec<LineSegmen
         continue;
       }
 
-      let line_segment = LineSegment::new(trajectory.get_id(), start_point, end_point);
+      let acc = (end_point.get_sog() - start_point.get_sog()) / (end_point.get_timestamp() - start_point.get_timestamp()) as f64;
+      let avg_sog = (end_point.get_sog() + start_point.get_sog()) / 2.0;
+      let line_segment = LineSegment::new(trajectory.get_id(), start_point, end_point, acc, avg_sog);
       line_segments.push(line_segment);
     }
   }
