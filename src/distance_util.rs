@@ -166,8 +166,9 @@ fn project_point_to_line(point: &Point, line_start: &Point, line_end: &Point) ->
   );
 
   // 获得投影点的坐标
-  // @BUG 出现了除以 0
-  let cofficient = compute_inner_product(&vector_1, &vector_2) / compute_inner_product(&vector_2, &vector_2);
+  // 出现了除以 0 的情况需要应对，主要发生在是一个静止点的情况
+  let length = compute_inner_product(&vector_2, &vector_2);
+  let cofficient = if length == 0.0 { 0.0 } else { compute_inner_product(&vector_1, &vector_2) / length };
   let project_point = Point::new(
     line_start.get_x() + cofficient * vector_2.get_x(),
     line_start.get_y() + cofficient * vector_2.get_y(),

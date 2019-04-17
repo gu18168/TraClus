@@ -6,8 +6,10 @@ use traclus::{
     trajectory::Trajectory
   },
   file_io::{
-    read_trajectory_lines, 
-    write_cluster,
+    // read_trajectory_lines, 
+    read_trajectory_lines_from_csv,
+    // write_cluster,
+    write_cluster_with_gd,
     FileError
   },
   partition_tra::{
@@ -37,7 +39,7 @@ fn main() {
     let trajectories: Vec<Trajectory>;
 
     // 获得轨迹信息
-    match read_trajectory_lines(&args[1]) {
+    match read_trajectory_lines_from_csv(&args[1]) {
       Ok(trajs) => { trajectories = trajs; },
       Err(e) => {
         match e {
@@ -70,7 +72,7 @@ fn main() {
     let clusters = construct_cluster(line_segment_clusters);
 
     // 写聚类信息到文件中
-    write_cluster(&args[2], &clusters);
+    write_cluster_with_gd(&args[2], &clusters);
   } else {
     println!("Please give me 4 input parameters(inputFilePath, outputFilePath, eps, minLns)!");
     println!("--e.g. cargo run deer_1995.tra testOut.txt 29 8");

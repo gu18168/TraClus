@@ -13,6 +13,7 @@ use crate::{
   }
 };
 use std::collections::HashSet;
+use rayon::prelude::*;
 
 static MDL_COST_ADWANTAGE: usize = 25;
 static MIN_LINE_SEGMENT_LENGTH: f64 = 50.0;
@@ -20,7 +21,7 @@ static MIN_LINE_SEGMENT_LENGTH: f64 = 50.0;
 /// 将轨迹抽象为划分轨迹
 pub fn partition_trajectories(trajectories: Vec<Trajectory>) -> Vec<ThickTrajectory> {
   // 直接所有权转移
-  trajectories.into_iter()
+  trajectories.into_par_iter()
     .map(|trajectory| partition_trajectory(trajectory))
     .collect()
 }
@@ -59,7 +60,7 @@ fn partition_trajectory(trajectory: Trajectory) -> ThickTrajectory {
         end_index
       );
 
-      // 只用比较最后一段，因为前面的都已经通过了才会到这一步
+      // 只比较最后一段，应该问题不大
       let a_cost = compute_acc_cost(
         trajectory.get_point(start_index).unwrap(), 
         trajectory.get_point(end_index).unwrap(),
@@ -67,7 +68,9 @@ fn partition_trajectory(trajectory: Trajectory) -> ThickTrajectory {
         trajectory.get_point(end_index).unwrap()
       );
 
-      if no_par_cost + MDL_COST_ADWANTAGE < par_cost || a_cost > 0.5 || a_cost < -0.2 {
+      if no_par_cost + MDL_COST_ADWANTAGE < par_cost 
+        || a_cost < -0.2  || (a_cost > 0.0 && a_cost < 0.5) 
+      {
         partition_indexs.insert(end_index - 1);
         start_index = end_index - 1;
         length = 0;
@@ -139,7 +142,11 @@ fn compute_acc_cost(start_point: &Point, end_point: &Point, line_start_point: &P
   let a_max = if a_1 >= a_2 { a_1 } else { a_2 };
   let a_min = if a_1 < a_2 { a_1 } else { a_2 };
 
-  cos_theta * ( a_min / a_max )
+  if a_max == a_min && a_max == 0.0 { return cos_theta; }
+  if a_min == 0.0 { return 1.0 / a_max; }
+  if a_max == 0.0 { return cos_theta * a_min; }
+
+  cos_theta * a_min / a_max
 }
 
 /// 将轨迹的划分点相连成为线段存入数组中

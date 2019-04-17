@@ -5,7 +5,6 @@ use crate::{
     cluster::Cluster
   }
 };
-use chrono::prelude::*;
 use csv::Reader;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufRead, Write};
@@ -86,24 +85,26 @@ pub fn read_trajectory_lines_from_csv(path: &str) -> Result<Vec<Trajectory>, Fil
   if let Ok(mut rdr) = open_file {
     let mut trajectorys: Vec<Trajectory> = Vec::new();
     let mut prev_mmsi = String::from("");
+    let mut prev_timestamp: i64 = -1;
 
     for record in rdr.records().filter_map(|result| result.ok()) {
       let mmsi = record.get(0).unwrap();
-      let sog: f64 = record.get(1).unwrap().parse().expect("SOG must be a f64!");
-      let longitude: f64 = record.get(2).unwrap().parse().expect("longitude must be a f64!");
-      let latitude: f64 = record.get(3).unwrap().parse().expect("latitude must be a f64!");
+      let sog: f64 = record.get(3).unwrap().parse().expect("SOG must be a f64!");
+      let longitude: f64 = record.get(1).unwrap().parse().expect("longitude must be a f64!");
+      let latitude: f64 = record.get(2).unwrap().parse().expect("latitude must be a f64!");
       let hour: usize = record.get(4).unwrap().parse().expect("Hour must be a usize!");
       let mins: usize = record.get(5).unwrap().parse().expect("Mins must be a usize!");
       let secs: usize = record.get(6).unwrap().parse().expect("Secs must be a usize!");
 
-      let timestamp = time_to_second(
-        &(String::from("20181222_") + 
-        hour.to_string().as_str() + 
-        mins.to_string().as_str() + 
-        secs.to_string().as_str())
-      ).expect("Time format must be %Y%m%d_%H%M%S!");
+      let timestamp = (secs + mins * 60 + hour * 60 * 60) as i64;
 
-      let point = Point::new(longitude, latitude, sog, timestamp);
+      // 去除同一时间点的冗余数据
+      if prev_timestamp == timestamp && mmsi == prev_mmsi { continue; }
+      prev_timestamp = timestamp;
+
+      if sog < 0.5 { continue; }
+
+      let point = Point::new(longitude * 1000000.0, latitude * 1000000.0, sog, timestamp);
 
       if prev_mmsi != mmsi {
         let mut trajectory = Trajectory::new(trajectorys.len());
@@ -122,15 +123,6 @@ pub fn read_trajectory_lines_from_csv(path: &str) -> Result<Vec<Trajectory>, Fil
   }
 }
 
-fn time_to_second(time: &str) -> Result<i64, FileError> {
-  let date = Utc.datetime_from_str(time, "%Y%m%d_%H%M%S");
-  if let Ok(date) = date {
-    return Ok(date.timestamp());
-  } else {
-    return Err(FileError::DimensionPointError);
-  }
-}
-
 /// 将簇写入到文件中
 pub fn write_cluster(out_path: &str, clusters: &Vec<Cluster>) {
   let mut file = OpenOptions::new().write(true).create(true)
@@ -140,11 +132,28 @@ pub fn write_cluster(out_path: &str, clusters: &Vec<Cluster>) {
     let info_line = cluster.get_id().to_string() + " cluster\tpoint num: " + &cluster.get_len().to_string() + "\n";
     file.write_all(info_line.as_bytes()).expect("File can't write");
     for point in cluster.get_points() {
-      let x = point.get_x();
-      let y = point.get_y();
+      let x = point.get_x() / 1000000.0;
+      let y = point.get_y() / 1000000.0;
       let point_line = x.to_string() + " " + &y.to_string() + "\t";
       file.write_all(point_line.as_bytes()).expect("File can't write");
     }
     file.write_all(b"\n").expect("File can't write");
+  }
+}
+
+/// 为可视化而做的格式
+pub fn write_cluster_with_gd(out_path: &str, clusters: &Vec<Cluster>) {
+  let mut file = OpenOptions::new().write(true).create(true)
+    .open(out_path).expect("File can't write");
+  
+  for cluster in clusters {
+    file.write_all(b"\"").expect("File can't write");
+    for point in cluster.get_points() {
+      let x = point.get_x() / 1000000.0;
+      let y = point.get_y() / 1000000.0;
+      let point_line = "[".to_string() + &x.to_string() + "," + &y.to_string() + "],";
+      file.write_all(point_line.as_bytes()).expect("File can't write");
+    }
+    file.write_all(b"\"\n").expect("File can't write");
   }
 }

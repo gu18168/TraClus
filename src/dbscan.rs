@@ -97,7 +97,8 @@ pub fn perform_dbscan(eps: f64, min_lns: usize, line_segments: &Vec<LineSegment>
       .collect();
 
     for other in others {
-      result[other] = index as i32;
+      // 一个点被多个核心点相连，默认使用第一个核心点
+      if result[other] == -1 { result[other] = index as i32; }
     }
   }
 
